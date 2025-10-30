@@ -82,6 +82,24 @@ def feed_cat(cat):
         print("You don't have any kibble to feed your cat")
         input("Press enter to continue... ")
 
+def rename_cat(cat):
+    clear_screen()
+    print("If you'd like to rename your cat, type its new name below.")
+    print("Otherwise, leave it blank and press enter to keep its current name.")
+    new_name = input("Name: ")
+
+    if new_name != "":
+        cat.name = new_name
+
+def quit_program():
+    clear_screen()
+    print("Are you sure you want to quit?")
+    print("Your cat will leave and the simulation will end permanently.")
+    user_input = input("\nAre you sure you want to proceed? (Yes/No): ")
+    choice = user_input.lower()
+    if choice == "yes" or choice == "y":
+        quit()
+
 if __name__ == "__main__":
     cat = Cat("Default")
     display_welcome()
