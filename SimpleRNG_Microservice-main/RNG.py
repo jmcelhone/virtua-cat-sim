@@ -4,9 +4,9 @@ import random
 def main():
     context = zmq.Context()
     socket = context.socket(zmq.REP)
-    socket.bind("tcp://*:5555")
+    socket.bind("tcp://*:5558")
 
-    print("RNG Service Listening on Port 5555")
+    print("RNG Service Listening on Port 5558")
 
     while True:
         # wait for request from client
@@ -21,7 +21,7 @@ def main():
 
 
 def rng_begin():
-    x = random.randint(1, 100000)
+    x = random.randint(5, 10)
     print(f"[RNG] Generated: {x}")
     return x
 

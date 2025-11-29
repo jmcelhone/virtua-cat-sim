@@ -10,7 +10,7 @@ class Cat:
         self.max_happiness = 10
         self.energy = 5
         self.max_energy = 10
-        self.kibble = 10
+        self.kibble = starting_kibble
 
 def clear_screen():
     if sys.platform.startswith('win'):
@@ -78,6 +78,7 @@ def feed_cat(cat):
     if cat.kibble > 0:
         cat.kibble -= 1
         cat.hunger -= 1
+        if cat.hunger < 0: cat.hunger = 0
         print("You feed your cat some kibble. Yum!")
         print(f"Kibble Stock: {cat.kibble} left")
         print(f"Hunger: {cat.hunger}")
@@ -108,6 +109,10 @@ if __name__ == "__main__":
     context = zmq.Context()
     socket_ascii = context.socket(zmq.REQ)
     socket_ascii.connect("tcp://localhost:5557")
+    socket_rng = context.socket(zmq.REQ)
+    socket_rng.connect("tcp://localhost:5558")
+    socket_rng.send_string("generate")
+    starting_kibble = socket_rng.recv_string()
 
     cat = Cat("DefaultName")
     display_welcome()
