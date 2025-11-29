@@ -1,0 +1,20 @@
+[
+    {
+        "name": "milo",
+        "hunger": 10,
+        "happiness": 10,
+        "max_happiness": 10,
+        "energy": 5,
+        "max_energy": 10,
+        "kibble": 9
+    },
+    {
+        "name": "biddy",
+        "hunger": 9,
+        "happiness": 10,
+        "max_happiness": 10,
+        "energy": 5,
+        "max_energy": 10,
+        "kibble": 7
+    }
+]

@@ -1,6 +1,7 @@
 import sys
 import os
 import zmq
+import json
 
 class Cat:
     def __init__(self, name):
@@ -13,7 +14,22 @@ class Cat:
         self.max_happiness = 10
         self.energy = 5
         self.max_energy = 10
-        self.kibble = starting_kibble
+        self.kibble = int(starting_kibble)
+    
+    def to_dict(self):
+        return {
+            "name": self.name,
+            "hunger": self.hunger,
+            "happiness": self.happiness,
+            "max_happiness": self.max_happiness,
+            "energy": self.energy,
+            "max_energy": self.max_energy,
+            "kibble": self.kibble,
+        }
+    def apply_dict(self, data: dict):
+        for k in ("name", "hunger", "happiness", "max_happiness", "energy", "max_energy", "kibble"):
+            if k in data:
+                setattr(self, k, data[k])
 
 def clear_screen():
     if sys.platform.startswith('win'):
@@ -53,6 +69,9 @@ def display_command_screen(cat):
     print("2: (F)eed cat (costs 1 kibble)")
     print("3: (R)ename cat")
     print("4: (Q)uit\n")
+    print("5: (S)ave cat")
+    print("6: (L)oad cat")
+    print("7: (D)elete cat\n")
     choose_action(cat)
 
 def choose_action(cat):
@@ -66,6 +85,12 @@ def choose_action(cat):
         rename_cat(cat)
     elif choice == "4" or choice == "q":
         quit_program()
+    elif choice == "5" or choice == "s":
+        save_cat()
+    elif choice == "6" or choice == "l":
+        load_cat()
+    elif choice == "7" or choice == "d":
+        delete_save()
         
 def display_status(cat):
     clear_screen()
@@ -105,11 +130,81 @@ def rename_cat(cat):
 def quit_program():
     clear_screen()
     print("Are you sure you want to quit?")
-    print("Your cat will leave and the simulation will end permanently.")
+    print("Any unsaved cat data will be cleared.")
     user_input = input("\nAre you sure you want to proceed? (Yes/No): ")
     choice = user_input.lower()
     if choice == "yes" or choice == "y":
         quit()
+
+def save_cat():
+    request = {"action": "save", "data": cat.to_dict()}
+    socket_save.send(json.dumps(request).encode("utf-8"))
+    resp = socket_save.recv().decode("utf-8")
+    print("SERVER:", resp)
+    input("\nPress Enter to continue")
+
+def list_saves():
+    request = {"action": "get_all"}
+    socket_save.send(json.dumps(request).encode("utf-8"))
+    resp = socket_save.recv().decode("utf-8")
+    try:
+        items = json.loads(resp)
+    except Exception:
+        items = []
+    return items
+
+def load_cat():
+    items = list_saves()
+    if not items:
+        print("No saved cats available.")
+        input("\nPress Enter to continue...")
+        return
+
+    print("\nSaved Cats:")
+    for i, item in enumerate(items):
+        # show a brief summary (name + hunger)
+        name = item.get("name", "<unknown>")
+        hunger = item.get("hunger", "?")
+        print(f"[{i}] {name} (hunger={hunger})")
+
+    try:
+        idx = int(input("\nEnter index to load: "))
+    except ValueError:
+        print("Invalid input.")
+        input("\nPress Enter to continue...")
+        return
+
+    if 0 <= idx < len(items):
+        saved = items[idx]
+        cat.apply_dict(saved)
+        print(f"Loaded save [{idx}] into current cat.")
+    else:
+        print("Index out of range.")
+    input("\nPress Enter to continue...")
+
+def delete_save():
+    items = list_saves()
+    if not items:
+        print("No saved data to delete.")
+        input("\nPress Enter to continue...")
+        return
+
+    print("\nSaved Items:")
+    for i, item in enumerate(items):
+        print(f"[{i}] {item.get('name','<no name>')}")
+
+    try:
+        idx = int(input("\nEnter index number to delete: "))
+    except ValueError:
+        print("Invalid input.")
+        input("\nPress Enter to continue...")
+        return
+
+    request = {"action": "delete", "index": idx}
+    socket_save.send(json.dumps(request).encode("utf-8"))
+    resp = socket_save.recv().decode("utf-8")
+    print("SERVER:", resp)
+    input("\nPress Enter to continue...")
 
 if __name__ == "__main__":
     context = zmq.Context()
@@ -122,6 +217,9 @@ if __name__ == "__main__":
 
     socket_noun = context.socket(zmq.REQ)
     socket_noun.connect("tcp://localhost:5555")
+
+    socket_save = context.socket(zmq.REQ)
+    socket_save.connect("tcp://localhost:5556")
 
 
     cat = Cat("DefaultName")
