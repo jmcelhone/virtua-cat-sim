@@ -1,5 +1,6 @@
 import sys
 import os
+import zmq
 
 class Cat:
     def __init__(self, name):
@@ -26,6 +27,9 @@ def draw_cat():
 
 def display_welcome():
     clear_screen()
+    socket_ascii.send_string(f"ascii:VirtuaCat")
+    ascii_art = socket_ascii.recv_string()
+    print(ascii_art)
     draw_cat()
     print("Welcome to Virtua-Cat Simulator!")
     print("Adopt and care for your very own pet.\n\n")
@@ -101,7 +105,11 @@ def quit_program():
         quit()
 
 if __name__ == "__main__":
-    cat = Cat("Default")
+    context = zmq.Context()
+    socket_ascii = context.socket(zmq.REQ)
+    socket_ascii.connect("tcp://localhost:5557")
+
+    cat = Cat("DefaultName")
     display_welcome()
     adopt_cat(cat)
     while True:
