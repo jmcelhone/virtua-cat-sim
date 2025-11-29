@@ -4,6 +4,9 @@ import zmq
 
 class Cat:
     def __init__(self, name):
+        socket_rng.send_string("generate")
+        starting_kibble = socket_rng.recv_string()
+
         self.name = name
         self.hunger = 10
         self.happiness = 10
@@ -71,6 +74,9 @@ def display_status(cat):
     print(f"Happiness = {cat.happiness}")
     print(f"Energy = {cat.energy}")
     print(f"Kibble = {cat.kibble}")
+    socket_noun.send_string(f"1 food")
+    food = socket_noun.recv().decode("utf-8")
+    print(f"Your cat is thinking about {food}.")
     input(f"\nPress Enter to Continue...")
 
 def feed_cat(cat):
@@ -107,12 +113,16 @@ def quit_program():
 
 if __name__ == "__main__":
     context = zmq.Context()
+
     socket_ascii = context.socket(zmq.REQ)
     socket_ascii.connect("tcp://localhost:5557")
+
     socket_rng = context.socket(zmq.REQ)
     socket_rng.connect("tcp://localhost:5558")
-    socket_rng.send_string("generate")
-    starting_kibble = socket_rng.recv_string()
+
+    socket_noun = context.socket(zmq.REQ)
+    socket_noun.connect("tcp://localhost:5555")
+
 
     cat = Cat("DefaultName")
     display_welcome()
